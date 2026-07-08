@@ -117,6 +117,7 @@ token_t lexer_new_token(lexer_t* l) {
             case '(':
             case ')':
             case '@':
+            case '$':
             case '\'':
             case '"':
             case '?':
@@ -231,12 +232,13 @@ token_t lexer_new_token(lexer_t* l) {
                 l->line++;
                 l->col = 0;
             case ' ':
-                // set flag for preceding whitespace to true
+                //TODO: set flag for preceding whitespace to true
                 l->cursor++;
                 l->col++;
                 break;
 
             default:
+                // FIXME: skip over unidentified chars (check if token len is 0)
                 kind = TOKEN_KIND_IDENT;
                 uint32_t begin = l->cursor;
                 while((c = l->code[l->cursor]) != '\0' && (isalnum(c) || c == '_')) {       
@@ -246,7 +248,7 @@ token_t lexer_new_token(lexer_t* l) {
                 //printf("cursor: %d, begin: %d\n", l->cursor, begin);
                 char* cpy = malloc(l->cursor - begin + 1);
                 strncpy(cpy, &l->code[begin], l->cursor - begin);
-                cpy[l->cursor - begin + 1] = '\0';
+                cpy[l->cursor - begin] = '\0';
                 return (token_t){ .kind = kind, .row = begin_row, .col = begin_col, .data = { .ident = { .ident = cpy } } };
         }
         //l->cursor++;
