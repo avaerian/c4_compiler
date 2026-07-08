@@ -27,6 +27,7 @@ const token_kind_t TOKEN_KIND_DIV_ASSIGN = 144; // /=
 const token_kind_t TOKEN_KIND_MOD_ASSIGN = 145; // %=
 const token_kind_t TOKEN_KIND_AND_ASSIGN = 146; // &=
 const token_kind_t TOKEN_KIND_OR_ASSIGN = 147; // |=
+const token_kind_t TOKEN_KIND_KEYWORD = 255;
 
 const char* SYMBOL_MAP[20] = {
     "&&",
@@ -51,6 +52,42 @@ const char* SYMBOL_MAP[20] = {
     "|=",
 };
 
+const char* KEYWORD_MAP[KEYWORD_LEN] = {
+    [FOR] = "for",
+    [WHILE] = "while",
+    [FN] = "fn",
+   
+    [PUB] = "pub",
+    [MUT] = "mut",
+    [STRUCT] = "struct",
+    [ENUM] = "enum",
+    [RETURN] = "return",
+
+    [U0] = "u0",
+    [U8] = "u8",
+    [U16] = "u16",
+    [U32] = "u32",
+    [U64] = "u64",
+    [USIZE] = "usize",
+   
+    [I8] = "i8",
+    [I16] = "i16",
+    [I32] = "i32",
+    [I64] = "i64",
+    [ISIZE] = "isize",
+   
+    [F32] = "f32",
+    [F64] = "f64",
+
+    [VOID] = "void",
+
+    [CONST] = "const",
+    [EXTERN] = "extern",
+    [STATIC] = "static",
+    [UNION] = "union",
+    [ASSERT] = "assert",
+};
+
 lexer_t* lexer_new(const char* src) {
     if(!src)
         return NULL;
@@ -71,6 +108,10 @@ void lexer_free(lexer_t* l) {
     free(l);
 }
 
+const char* kw_str(kw_t kw) {
+    return KEYWORD_MAP[kw];
+}
+
 const char* lexer_token_str(token_t t) {
     char* res;
     switch(t.kind) {
@@ -79,6 +120,13 @@ const char* lexer_token_str(token_t t) {
             break;
         case TOKEN_KIND_IDENT:
             res = t.data.ident.ident;
+            break;
+        case TOKEN_KIND_KEYWORD:
+            res = malloc(3 + strlen(kw_str(t.data.keyword.kw)));
+            res[0] = 'k';
+            res[1] = 'w';
+            res[2] = '=';
+            strcpy(res + 3, kw_str(t.data.keyword.kw));
             break;
         default:
             if(t.kind > TOKEN_KIND_IDENT) {
@@ -90,6 +138,16 @@ const char* lexer_token_str(token_t t) {
             break;
     } 
     return res;
+}
+
+#define NOT_A_KEYWORD -1
+static inline int get_keyword(const char* test) {
+    for(int i = 0; i < KEYWORD_LEN; i++) {
+        if(!strcmp(KEYWORD_MAP[i], test)) {
+            return i;
+        }
+    }
+    return NOT_A_KEYWORD;
 }
 
 static inline char peek_next_char(lexer_t* l) {
@@ -235,6 +293,8 @@ token_t lexer_new_token(lexer_t* l) {
                 //TODO: set flag for preceding whitespace to true
                 l->cursor++;
                 l->col++;
+                begin_row = l->line;
+                begin_col = l->col;
                 break;
 
             default:
@@ -249,6 +309,11 @@ token_t lexer_new_token(lexer_t* l) {
                 char* cpy = malloc(l->cursor - begin + 1);
                 strncpy(cpy, &l->code[begin], l->cursor - begin);
                 cpy[l->cursor - begin] = '\0';
+                int kw = get_keyword(cpy);
+                if(kw != NOT_A_KEYWORD) {
+                    kind = TOKEN_KIND_KEYWORD;
+                    return (token_t){ .kind = kind, .row = begin_row, .col = begin_col, .data = { .keyword = { .kw = kw } } }; 
+                }
                 return (token_t){ .kind = kind, .row = begin_row, .col = begin_col, .data = { .ident = { .ident = cpy } } };
         }
         //l->cursor++;

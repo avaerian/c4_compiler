@@ -24,6 +24,7 @@ extern const token_kind_t TOKEN_KIND_DIV_ASSIGN; ///=
 extern const token_kind_t TOKEN_KIND_MOD_ASSIGN; //%= 
 extern const token_kind_t TOKEN_KIND_AND_ASSIGN; //&=
 extern const token_kind_t TOKEN_KIND_OR_ASSIGN;  //|=
+extern const token_kind_t TOKEN_KIND_KEYWORD;
 
 typedef struct lexer {
     const char* code;
@@ -43,8 +44,35 @@ typedef struct token_comment {
 } token_comment_t;
 
 typedef struct token_ident {
-    const char* ident;
+    const char* ident; //TODO: use symbol table instead of copying each ident
 } token_ident_t;
+
+typedef enum kw {
+    FOR = 0, 
+    WHILE, 
+    FN,
+    STRUCT,
+    ENUM,
+    PUB,
+    MUT,
+    RETURN,
+    U0, U8, U16, U32, U64, USIZE,
+    I8, I16, I32, I64, ISIZE,
+    F32, F64,
+
+    VOID,
+    EXTERN,
+    CONST,
+    STATIC,
+    UNION,
+    ASSERT,
+     
+    KEYWORD_LEN // not a keyword; used purely for retrieving size
+} kw_t;
+
+typedef struct token_kw {
+     kw_t kw;
+} token_kw_t;
 
 typedef struct token {
     token_kind_t kind; // type to identify union
@@ -52,11 +80,13 @@ typedef struct token {
         token_sym_t sym;
         token_ident_t ident;
         token_comment_t comment;
+        token_kw_t keyword;
     } data; 
     uint32_t row, col;
 } token_t;
 
 lexer_t* lexer_new(const char* src);
 token_t lexer_new_token(lexer_t* l);
+inline const char* kw_str(kw_t kw);
 const char* lexer_token_str(token_t t);
 void lexer_free(lexer_t* l);
