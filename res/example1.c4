@@ -1,0 +1,12 @@
+use std;
+
+void main(args: str[]) {
+    io::printn("Hello, world!");
+    for(int i = 0; i < 10; i++) {
+        io::printfn("%d", i);
+    }
+}
+
+u8* read_bytes(file: File*) {
+    explode();
+}
