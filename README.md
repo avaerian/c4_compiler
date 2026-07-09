@@ -3,6 +3,6 @@
 > Despite the explorative nature, I intend to develop this into something actually usable.
 
 
-# 💥c4_lang</h3>
+# 💥c4_lang
 An explosive programming language built on the principle of simplicity.
 
