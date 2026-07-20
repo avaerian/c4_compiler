@@ -1,12 +1,19 @@
 use std;
 
+// The entry point to our program.
 void main(args: str[]) {
     io::printn("Hello, world!");
     for(int i = 0; i < 10; i++) {
         io::printfn("%d", i);
     }
+    /**/
+
+    /*Hello, world!
+     * This is a test message.
+     * Let's explore to see if this works as intended! */ */
 }
 
+/* This is some test text */
 u8* read_bytes(file: File*) {
     explode();
 }
