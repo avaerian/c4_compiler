@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include "arena.h"
 #include "lex.h"
 
 const char* TEST_FILE = "../res/example1.c4";
@@ -24,9 +25,16 @@ int main(int argc, char** argv) {
     }
     
     const char* src = src_file_to_str(f);
-    lexer_t* l = lexer_new(src);
+    arena_t* str_alloc = arena_new(1024);
+    if(!str_alloc) {
+        perror("Failed to create string arena allocator");
+        goto cleanup2;
+    }
+
+    lexer_t* l = lexer_new(src, str_alloc);
     if(!l) {
-        printf("Failed to create lexer");
+        perror("Failed to create lexer");
+        arena_free(str_alloc);
         goto cleanup2;
     }
     
@@ -34,7 +42,10 @@ int main(int argc, char** argv) {
     token_t tok;
     while((tok = lexer_new_token(l)).kind != TOKEN_KIND_EOF)
         printf("Token(row:%d, col:%d): %s\n", tok.row, tok.col, lexer_token_str(tok));
-    
+
+    printf("Token(row:%d, col:%d): %s\n", tok.row, tok.col, lexer_token_str(tok));
+    printf("Token(row:%d, col:%d): %s\n", tok.row, tok.col, lexer_token_str(tok));
+
     goto cleanup3;
 
 cleanup3: free(l);

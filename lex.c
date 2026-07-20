@@ -56,13 +56,17 @@ const char* KEYWORD_MAP[KEYWORD_LEN] = {
     [FOR] = "for",
     [WHILE] = "while",
     [FN] = "fn",
+    [IF] = "if",
+    [ELSE] = "else",
    
     [PUB] = "pub",
     [MUT] = "mut",
     [STRUCT] = "struct",
     [ENUM] = "enum",
+    [UNION] = "union",
     [RETURN] = "return",
 
+    [CHAR] = "char",
     [U0] = "u0",
     [U8] = "u8",
     [U16] = "u16",
@@ -84,11 +88,17 @@ const char* KEYWORD_MAP[KEYWORD_LEN] = {
     [CONST] = "const",
     [EXTERN] = "extern",
     [STATIC] = "static",
-    [UNION] = "union",
     [ASSERT] = "assert",
+    [USE] = "use",
+    [IMPORT] = "import",
+
+    [SWITCH] = "switch",
+    [CASE] = "case",
+    [BREAK] = "break",
+    [CONTINUE] = "continue",
 };
 
-lexer_t* lexer_new(const char* src) {
+lexer_t* lexer_new(char* src, arena_t* str_alloc) {
     if(!src)
         return NULL;
 
@@ -101,10 +111,13 @@ lexer_t* lexer_new(const char* src) {
     l->cursor = 0;
     l->line = 1;
     l->col = 1;
+    l->str_alloc = str_alloc;
     return l;
 }
 
 void lexer_free(lexer_t* l) {
+    l->code = NULL;
+    l->str_alloc = NULL;
     free(l);
 }
 
@@ -120,6 +133,11 @@ const char* lexer_token_str(token_t t) {
             break;
         case TOKEN_KIND_IDENT:
             res = t.data.ident.ident;
+            break;
+        case TOKEN_KIND_COMMENT:
+            res = malloc(t.data.comment.len + 1);
+            strncpy(res, t.data.comment.comment, t.data.comment.len);
+            res[t.data.comment.len] = '\0';
             break;
         case TOKEN_KIND_KEYWORD:
             res = malloc(3 + strlen(kw_str(t.data.keyword.kw)));
@@ -141,7 +159,7 @@ const char* lexer_token_str(token_t t) {
 }
 
 #define NOT_A_KEYWORD -1
-static inline int get_keyword(const char* test) {
+static inline int get_keyword(char* test) {
     for(int i = 0; i < KEYWORD_LEN; i++) {
         if(!strcmp(KEYWORD_MAP[i], test)) {
             return i;
@@ -162,7 +180,7 @@ static inline void incr_cursor(lexer_t* l) {
 token_t lexer_new_token(lexer_t* l) {
     char kind = TOKEN_KIND_EOF;
     char c;
-    uint32_t begin_row = l->line, begin_col = l->col;
+    uint32_t begin_row = l->line, begin_col = l->col, begin_cursor = l->cursor;
     while((c = kind = l->code[l->cursor]) != '\0') { 
         switch(c) {
             case '#':
@@ -181,6 +199,7 @@ token_t lexer_new_token(lexer_t* l) {
             case '?':
             case '.':
             case '\\':
+            case '~':
             case ',': goto ret_symbol;
 
             case '&':
@@ -240,7 +259,27 @@ token_t lexer_new_token(lexer_t* l) {
                     case '/':
                         kind = TOKEN_KIND_COMMENT;
                         incr_cursor(l);
-                        break;
+                        incr_cursor(l);
+                        while(l->code[l->cursor] && l->code[l->cursor] != '\n')
+                            incr_cursor(l);
+                        return (token_t){ .kind = kind, .row = begin_row, .col = begin_col, .data = { .comment = { .type = SINGLE_LINE, .comment = &l->code[begin_cursor], .len = l->cursor - begin_cursor } } };
+                    case '*':
+                        kind = TOKEN_KIND_COMMENT;
+                        incr_cursor(l);
+                        incr_cursor(l);
+                        while(l->code[l->cursor] 
+                                && !(l->code[l->cursor] == '*' && l->code[l->cursor+1] == '/')) {
+                            //printf("DEBUG: %c%c\n", l->code[l->cursor], l->code[l->cursor+1]);
+                            if(l->code[l->cursor] == '\n') {
+                                l->line++;
+                                l->col = 0;
+                            }
+                            incr_cursor(l);
+                        }
+                        l->cursor += 2;
+                        l->col += 2;
+                        printf("DEBUG: comment len = %d\n", l->cursor - begin_cursor);
+                        return (token_t){ .kind = kind, .row = begin_row, .col = begin_col, .data = { .comment = { .type = MULTI_LINE, .comment = &l->code[begin_cursor], .len = l->cursor - begin_cursor } } };
                 }
                 goto ret_symbol;
             case '%':
@@ -295,6 +334,7 @@ token_t lexer_new_token(lexer_t* l) {
                 l->col++;
                 begin_row = l->line;
                 begin_col = l->col;
+                begin_cursor = l->cursor;
                 break;
 
             default:
@@ -305,7 +345,6 @@ token_t lexer_new_token(lexer_t* l) {
                     l->cursor++;
                     l->col++;
                 }
-                //printf("cursor: %d, begin: %d\n", l->cursor, begin);
                 char* cpy = malloc(l->cursor - begin + 1);
                 strncpy(cpy, &l->code[begin], l->cursor - begin);
                 cpy[l->cursor - begin] = '\0';
@@ -316,7 +355,6 @@ token_t lexer_new_token(lexer_t* l) {
                 }
                 return (token_t){ .kind = kind, .row = begin_row, .col = begin_col, .data = { .ident = { .ident = cpy } } };
         }
-        //l->cursor++;
     }
     return (token_t){ .kind = kind, .row = begin_row, .col = begin_col, .data = { .sym = { ._unused = c } } };
 

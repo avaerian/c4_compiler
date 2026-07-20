@@ -9,7 +9,11 @@ set(CMAKE_C_FLAGS "-std=gnu23 -g")
 set(SOURCE_FILES
     main.c
     lex.c
-    lex.h)
+    lex.h
+    sym_tbl.c
+    sym_tbl.h
+    arena.c
+    arena.h)
 
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})

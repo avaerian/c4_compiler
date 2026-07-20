@@ -1,4 +1,8 @@
+#ifndef _LEX_H
+#define _LEX_H
+
 #include <inttypes.h>
+#include "arena.h"
 
 typedef unsigned char token_kind_t; 
 
@@ -26,22 +30,27 @@ extern const token_kind_t TOKEN_KIND_AND_ASSIGN; //&=
 extern const token_kind_t TOKEN_KIND_OR_ASSIGN;  //|=
 extern const token_kind_t TOKEN_KIND_KEYWORD;
 
-typedef struct lexer {
-    const char* code;
+typedef struct {
+    char* code;
     uint32_t cursor;
     uint32_t line;
     uint32_t col;
+    arena_t* str_alloc;
 } lexer_t;
 
-typedef enum kw {
+typedef enum {
     FOR = 0, 
-    WHILE, 
+    WHILE,
+    IF,
+    ELSE,
     FN,
     STRUCT,
     ENUM,
     PUB,
     MUT,
     RETURN,
+    
+    CHAR, //remove and instead allow u8 to support chars and ints as values
     U0, U8, U16, U32, U64, USIZE,
     I8, I16, I32, I64, ISIZE,
     F32, F64,
@@ -52,35 +61,50 @@ typedef enum kw {
     STATIC,
     UNION,
     ASSERT,
-     
+    USE,
+    IMPORT,
+
+    SWITCH,
+    CASE,
+    CONTINUE,
+    BREAK,
+
     KEYWORD_LEN // not a keyword; used purely for retrieving size
 } kw_t;
 
-typedef struct token {
-    token_kind_t kind; // type to identify union
+typedef struct {
+    token_kind_t kind;
     union {
         struct {
             char _unused;
         } sym;
 
         struct {
-            const char* ident; //TODO: use symbol table instead of copying each ident
+            char* ident; //TODO: use symbol table instead of copying each ident
+            uint32_t len;
         } ident;
 
         struct {
-            const char* comment;
+            enum {
+                SINGLE_LINE, //
+                MULTI_LINE, /* */
+                DOCS, /** */                //TODO: review
+            } type;
+            char* comment;
             uint32_t len;
         } comment;
         
         struct {
             kw_t kw;
         } keyword;
-    } data; 
+    } data;
     uint32_t row, col;
 } token_t;
 
-lexer_t* lexer_new(const char* src);
+lexer_t* lexer_new(char* src, arena_t* str_alloc);
 token_t lexer_new_token(lexer_t* l);
 inline const char* kw_str(kw_t kw);
 const char* lexer_token_str(token_t t);
 void lexer_free(lexer_t* l);
+
+#endif // _LEX_H
