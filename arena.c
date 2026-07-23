@@ -83,7 +83,9 @@ void arena_reset(arena_t* a) {
 void arena_free(arena_t* a) {
     assert(a);
     arena_region_t* r = a->first;
-    while(r)
+    while(r) {
         free(r);
+        r = r->next;
+    }
     free(a);
 }
