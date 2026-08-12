@@ -4,31 +4,41 @@
 #include <inttypes.h>
 #include "arena.h"
 
-typedef unsigned char token_kind_t; 
+//typedef unsigned char token_kind_t; 
 
-extern const token_kind_t TOKEN_KIND_EOF;
-extern const token_kind_t TOKEN_KIND_IDENT;
-extern const token_kind_t TOKEN_KIND_LOGICAL_AND; // &&
-extern const token_kind_t TOKEN_KIND_LOGICAL_OR; // ||
-extern const token_kind_t TOKEN_KIND_R_ARROW; // ->
-extern const token_kind_t TOKEN_KIND_L_ARROW; // <-
-extern const token_kind_t TOKEN_KIND_COMMENT; //
-extern const token_kind_t TOKEN_KIND_L_BITSHIFT; // <<
-extern const token_kind_t TOKEN_KIND_R_BITSHIFT; // >>
-extern const token_kind_t TOKEN_KIND_NE;
-extern const token_kind_t TOKEN_KIND_EQ; // ==
-extern const token_kind_t TOKEN_KIND_LTE; // <=
-extern const token_kind_t TOKEN_KIND_GTE; // >=
-extern const token_kind_t TOKEN_KIND_INCR; // ++
-extern const token_kind_t TOKEN_KIND_DECR; // --
-extern const token_kind_t TOKEN_KIND_ADD_ASSIGN; //+=
-extern const token_kind_t TOKEN_KIND_SUB_ASSIGN; //-=
-extern const token_kind_t TOKEN_KIND_MUL_ASSIGN; //*=
-extern const token_kind_t TOKEN_KIND_DIV_ASSIGN; ///=
-extern const token_kind_t TOKEN_KIND_MOD_ASSIGN; //%= 
-extern const token_kind_t TOKEN_KIND_AND_ASSIGN; //&=
-extern const token_kind_t TOKEN_KIND_OR_ASSIGN;  //|=
-extern const token_kind_t TOKEN_KIND_KEYWORD;
+typedef enum {
+    TOKEN_KIND_EOF   = 0,
+    TOKEN_KIND_IDENT = 127,
+    TOKEN_KIND_LOGICAL_AND = 128, // &&
+    TOKEN_KIND_LOGICAL_OR = 129, // ||
+    TOKEN_KIND_R_ARROW = 130, // ->
+    TOKEN_KIND_L_ARROW = 131, // <-
+    TOKEN_KIND_COMMENT = 132, //
+    TOKEN_KIND_L_BITSHIFT = 133, // <<
+    TOKEN_KIND_R_BITSHIFT = 134, // >>
+    TOKEN_KIND_NE = 135,
+    TOKEN_KIND_EQ = 136, // ==
+    TOKEN_KIND_LTE = 137, // <=
+    TOKEN_KIND_GTE = 138, // >=
+    TOKEN_KIND_INCR = 139, // ++
+    TOKEN_KIND_DECR = 140, // --
+    TOKEN_KIND_ADD_ASSIGN = 141, // +=
+    TOKEN_KIND_SUB_ASSIGN = 142, // -=
+    TOKEN_KIND_MUL_ASSIGN = 143, // *=
+    TOKEN_KIND_DIV_ASSIGN = 144, // /=
+    TOKEN_KIND_MOD_ASSIGN = 145, // %=
+    TOKEN_KIND_AND_ASSIGN = 146, // &=
+    TOKEN_KIND_OR_ASSIGN = 147, // |=
+    TOKEN_KIND_KEYWORD = 255,
+    TOKEN_KIND_STRLIT = 254,
+    TOKEN_KIND_INTLIT = 253,
+    TOKEN_KIND_FLTLIT = 252,
+} token_kind_t;
+
+
+//extern const token_kind_t TOKEN_KIND_OPERATOR; // TODO: implement
+//extern const token_kind_t TOKEN_KIND_STRLIT;   // TODO: implement
+//extern const token_kind_t TOKEN_KIND_INTLIT;   // TODO: implement
 
 typedef struct {
     char* code;

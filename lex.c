@@ -5,30 +5,6 @@
 #include <ctype.h>
 #include "lex.h"
 
-const token_kind_t TOKEN_KIND_EOF   = 0;
-const token_kind_t TOKEN_KIND_IDENT = 127;
-const token_kind_t TOKEN_KIND_LOGICAL_AND = 128; // &&
-const token_kind_t TOKEN_KIND_LOGICAL_OR = 129; // ||
-const token_kind_t TOKEN_KIND_R_ARROW = 130; // ->
-const token_kind_t TOKEN_KIND_L_ARROW = 131; // <-
-const token_kind_t TOKEN_KIND_COMMENT = 132; //
-const token_kind_t TOKEN_KIND_L_BITSHIFT = 133; // <<
-const token_kind_t TOKEN_KIND_R_BITSHIFT = 134; // >>
-const token_kind_t TOKEN_KIND_NE = 135;
-const token_kind_t TOKEN_KIND_EQ = 136; // ==
-const token_kind_t TOKEN_KIND_LTE = 137; // <=
-const token_kind_t TOKEN_KIND_GTE = 138; // >=
-const token_kind_t TOKEN_KIND_INCR = 139; // ++
-const token_kind_t TOKEN_KIND_DECR = 140; // --
-const token_kind_t TOKEN_KIND_ADD_ASSIGN = 141; // +=
-const token_kind_t TOKEN_KIND_SUB_ASSIGN = 142; // -=
-const token_kind_t TOKEN_KIND_MUL_ASSIGN = 143; // *=
-const token_kind_t TOKEN_KIND_DIV_ASSIGN = 144; // /=
-const token_kind_t TOKEN_KIND_MOD_ASSIGN = 145; // %=
-const token_kind_t TOKEN_KIND_AND_ASSIGN = 146; // &=
-const token_kind_t TOKEN_KIND_OR_ASSIGN = 147; // |=
-const token_kind_t TOKEN_KIND_KEYWORD = 255;
-
 const char* SYMBOL_MAP[20] = {
     "&&",
     "||",
@@ -178,8 +154,8 @@ static inline void incr_cursor(lexer_t* l) {
 }
 
 token_t lexer_new_token(lexer_t* l) {
-    char kind = TOKEN_KIND_EOF;
-    char c;
+    unsigned char kind = TOKEN_KIND_EOF;
+    unsigned char c;
     uint32_t begin_row = l->line, begin_col = l->col, begin_cursor = l->cursor;
     while((c = kind = l->code[l->cursor]) != '\0') { 
         switch(c) {
