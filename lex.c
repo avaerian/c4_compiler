@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
 #include "lex.h"
 
 const char* SYMBOL_MAP[20] = {
@@ -122,6 +123,29 @@ const char* lexer_token_str(token_t t) {
             res[2] = '=';
             strcpy(res + 3, kw_str(t.data.keyword.kw));
             break;
+        case TOKEN_KIND_STRLIT:
+            res = malloc(t.data.strlit.len + 1);
+            strncpy(res, t.data.strlit.str, t.data.strlit.len);
+            res[t.data.strlit.len] = '\0';
+            break;
+        case TOKEN_KIND_INTLIT:
+            {}
+            int len = 0;
+            uint64_t tmp = t.data.intlit.val;
+            
+            do {
+                len++;
+                tmp /= 10;
+            } while(tmp != 0);
+
+            tmp = t.data.intlit.val;
+            res = malloc(len + 1);
+            for(int i = len - 1; i >= 0; i--) {
+                res[i] = '0' + (tmp % 10);
+                tmp /= 10;
+            }
+            res[len] = '\0';
+            break;
         default:
             if(t.kind > TOKEN_KIND_IDENT) {
                 return SYMBOL_MAP[t.kind - TOKEN_KIND_IDENT - 1];
@@ -169,15 +193,28 @@ token_t lexer_new_token(lexer_t* l) {
             case '(':
             case ')':
             case '@':
-            case '$':
-            case '\'':
-            case '"':
+            case '$': 
             case '?':
             case '.':
             case '\\':
             case '~':
             case ',': goto ret_symbol;
+            
+            case '\'':
+            case '"':
+                kind = TOKEN_KIND_STRLIT;
+                char quote = c;
+                incr_cursor(l);
+                while((c = l->code[l->cursor]) != '\0' && c != quote) {
+                    if(c == '\\') {
+                        incr_cursor(l);
+                    }
+                    incr_cursor(l);
+                }
+                incr_cursor(l); //skip quote
 
+                return (token_t){ kind, begin_row, begin_col, { .strlit = { &l->code[begin_cursor + 1], l->cursor - begin_cursor - 1, quote } } };
+            
             case '&':
                 if(peek_next_char(l) == '&') {
                     kind = TOKEN_KIND_LOGICAL_AND;
@@ -238,7 +275,7 @@ token_t lexer_new_token(lexer_t* l) {
                         incr_cursor(l);
                         while(l->code[l->cursor] && l->code[l->cursor] != '\n')
                             incr_cursor(l);
-                        return (token_t){ .kind = kind, .row = begin_row, .col = begin_col, .data = { .comment = { .type = SINGLE_LINE, .comment = &l->code[begin_cursor], .len = l->cursor - begin_cursor } } };
+                        return (token_t){ kind, begin_row, begin_col, { .comment = { .type = SINGLE_LINE, .comment = &l->code[begin_cursor], .len = l->cursor - begin_cursor } } };
                     case '*':
                         kind = TOKEN_KIND_COMMENT;
                         incr_cursor(l);
@@ -255,7 +292,7 @@ token_t lexer_new_token(lexer_t* l) {
                         l->cursor += 2;
                         l->col += 2;
                         printf("DEBUG: comment len = %d\n", l->cursor - begin_cursor);
-                        return (token_t){ .kind = kind, .row = begin_row, .col = begin_col, .data = { .comment = { .type = MULTI_LINE, .comment = &l->code[begin_cursor], .len = l->cursor - begin_cursor } } };
+                        return (token_t){ kind, begin_row, begin_col, { .comment = { .type = MULTI_LINE, .comment = &l->code[begin_cursor], .len = l->cursor - begin_cursor } } };
                 }
                 goto ret_symbol;
             case '%':
@@ -313,6 +350,19 @@ token_t lexer_new_token(lexer_t* l) {
                 begin_cursor = l->cursor;
                 break;
 
+            case '0' ... '9':
+                //NOTE: this is intended to be used for the lexer tokenizing, rather than
+                //what the actual result could be from parsing; for example, 1f (default to f64), 0.5f32, 0.5f64.
+                //In this case, f32 will be the next token in the stream with the bit flag PREC_WHITESPACE unset
+                //after the potential int/float literal.
+                kind = TOKEN_KIND_INTLIT; // could be float literal
+                uint64_t val = 0;
+                while((c = l->code[l->cursor]) != '\0' && isdigit(c)) {
+                    val = (val * 10) + (c - '0'); 
+                    incr_cursor(l);
+                } 
+                return (token_t){ kind, begin_row, begin_col, { .intlit = { val } } };
+
             default:
                 // FIXME: skip over unidentified chars (check if token len is 0)
                 kind = TOKEN_KIND_IDENT;
@@ -327,15 +377,15 @@ token_t lexer_new_token(lexer_t* l) {
                 int kw = get_keyword(cpy);
                 if(kw != NOT_A_KEYWORD) {
                     kind = TOKEN_KIND_KEYWORD;
-                    return (token_t){ .kind = kind, .row = begin_row, .col = begin_col, .data = { .keyword = { .kw = kw } } }; 
+                    return (token_t){ kind, begin_row, begin_col, { .keyword = { .kw = kw } } }; 
                 }
-                return (token_t){ .kind = kind, .row = begin_row, .col = begin_col, .data = { .ident = { .ident = cpy } } };
+                return (token_t){ kind, begin_row, begin_col, { .ident = { .ident = cpy } } };
         }
     }
-    return (token_t){ .kind = kind, .row = begin_row, .col = begin_col, .data = { .sym = { ._unused = c } } };
+    return (token_t){ kind, begin_row, begin_col, { .sym = { ._unused = c } } };
 
 ret_symbol:
     l->cursor++;
     l->col++;
-    return (token_t){ .kind = kind, .row = begin_row, .col = begin_col, .data = { .sym = { ._unused = c } } };
+    return (token_t){ kind, begin_row, begin_col, { .sym = { ._unused = c } } };
 }

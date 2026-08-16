@@ -2,11 +2,12 @@
 #define _LEX_H
 
 #include <inttypes.h>
+#include <math.h>
 #include "arena.h"
 
 //typedef unsigned char token_kind_t; 
 
-typedef enum {
+typedef enum token_kind_t {
     TOKEN_KIND_EOF   = 0,
     TOKEN_KIND_IDENT = 127,
     TOKEN_KIND_LOGICAL_AND = 128, // &&
@@ -30,17 +31,12 @@ typedef enum {
     TOKEN_KIND_AND_ASSIGN = 146, // &=
     TOKEN_KIND_OR_ASSIGN = 147, // |=
     TOKEN_KIND_KEYWORD = 255,
-    TOKEN_KIND_STRLIT = 254,
-    TOKEN_KIND_INTLIT = 253,
-    TOKEN_KIND_FLTLIT = 252,
+    TOKEN_KIND_STRLIT = 200,
+    TOKEN_KIND_INTLIT = 201,
+    //TOKEN_KIND_OP = 203, // ?
 } token_kind_t;
 
-
-//extern const token_kind_t TOKEN_KIND_OPERATOR; // TODO: implement
-//extern const token_kind_t TOKEN_KIND_STRLIT;   // TODO: implement
-//extern const token_kind_t TOKEN_KIND_INTLIT;   // TODO: implement
-
-typedef struct {
+typedef struct lexer_t {
     char* code;
     uint32_t cursor;
     uint32_t line;
@@ -48,7 +44,7 @@ typedef struct {
     arena_t* str_alloc;
 } lexer_t;
 
-typedef enum {
+typedef enum kw_t {
     FOR = 0, 
     WHILE,
     IF,
@@ -82,8 +78,9 @@ typedef enum {
     KEYWORD_LEN // not a keyword; used purely for retrieving size
 } kw_t;
 
-typedef struct {
+typedef struct token_t {
     token_kind_t kind;
+    uint32_t row, col;
     union {
         struct {
             char _unused;
@@ -107,8 +104,17 @@ typedef struct {
         struct {
             kw_t kw;
         } keyword;
+
+        struct {
+            char* str;
+            uint32_t len;
+            char quote;
+        } strlit;
+
+        struct {
+            uint64_t val;
+        } intlit; 
     } data;
-    uint32_t row, col;
 } token_t;
 
 lexer_t* lexer_new(char* src, arena_t* str_alloc);
