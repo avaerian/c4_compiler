@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 #include "arena.h"
 
@@ -84,8 +85,9 @@ void arena_free(arena_t* a) {
     assert(a);
     arena_region_t* r = a->first;
     while(r) {
+        arena_region_t* next = r->next;
         free(r);
-        r = r->next;
+        r = next;
     }
     free(a);
 }
