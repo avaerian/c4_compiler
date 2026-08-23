@@ -4,16 +4,20 @@ project(c4_compiler C)
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-set(CMAKE_C_FLAGS "-std=gnu23 -g")
+set(CMAKE_C_FLAGS "-std=c23 -g")
 
 set(SOURCE_FILES
     main.c
     lex.c
     lex.h
+    parse.c
+    parse.h
     sym_tbl.c
     sym_tbl.h
     arena.c
-    arena.h)
+    arena.h
+    utils.c
+    utils.h)
 
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
