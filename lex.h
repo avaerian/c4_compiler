@@ -33,6 +33,7 @@ typedef enum token_kind_t {
     TOKEN_KIND_KEYWORD = 255,
     TOKEN_KIND_STRLIT = 200,
     TOKEN_KIND_INTLIT = 201,
+    TOKEN_KIND_ERR = 202, //TODO: change
     //TOKEN_KIND_OP = 203, // ?
 } token_kind_t;
 
@@ -78,9 +79,13 @@ typedef enum kw_t {
     KEYWORD_LEN // not a keyword; used purely for retrieving size
 } kw_t;
 
+//Token flags
+#define PREC_WHITESPACE 0x01
+
 typedef struct token_t {
     token_kind_t kind;
     uint32_t row, col;
+    uint16_t flags;
     union {
         struct {
             char _unused;
@@ -118,9 +123,10 @@ typedef struct token_t {
 } token_t;
 
 lexer_t* lexer_new(char* src, arena_t* str_alloc);
-token_t lexer_new_token(lexer_t* l);
+token_t lexer_next_token(lexer_t* l);
+token_t lexer_peek_token(lexer_t* l);
 inline const char* kw_str(kw_t kw);
-const char* lexer_token_str(token_t t);
+const char* lexer_token_str(token_t t, arena_t* str_alloc);
 void lexer_free(lexer_t* l);
 
 #endif // _LEX_H
