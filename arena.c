@@ -25,8 +25,10 @@ exit: return NULL;
 arena_region_t* new_region(size_t capacity) {
     size_t len = sizeof(arena_region_t) + capacity;
     arena_region_t* r = malloc(len);
-    if(!r)
+    if(!r) {
+        fprintf(stderr, "Failed to malloc new arena_region_t");
         return NULL;
+    }
     
     r->ptr = r->data;
     r->end = r->data + capacity;
@@ -35,33 +37,33 @@ arena_region_t* new_region(size_t capacity) {
 }
 
 // returns NULL if failed to alloc
-void* arena_alloc(arena_t* a, size_t size, size_t align) {
+void* arena_alloc(arena_t* a, size_t size) {
     assert(a);
-    assert(align & (align-1)); // ensure align is power of 2
     
     if(size <= 0)
         return NULL;
  
     while(true) {
-        uintptr_t aligned = ((uintptr_t)a->cur->ptr + (align - 1)) & ~((uintptr_t)(align - 1));
-        uint8_t* next = (uint8_t*)(aligned + size);
+        uint8_t* next = a->cur->ptr + size; 
         if(next <= a->cur->end) {
+            uint8_t* ptr = a->cur->ptr;
             a->cur->ptr = next;
-            return (void*)aligned;
-        } else if(a->cur == a->first) { // try realloc first region to fit element
+            return (void*)ptr;
+        } else if(a->cur == a->first && a->cur->ptr == a->cur->data) { // try realloc first region to fit element
             // Corner case where if the first element to be allocated
             // is larger than the region size, a new region will be allocated
             // to fit the new element, but the first region will be wasted memory. 
-            arena_region_t* r = new_region(aligned + size - 1);
+            arena_region_t* r = new_region(size);
             if(!r)
                 return NULL;
-            free(a->cur);
+
+            r->next = a->cur; //set initial region to next
             a->cur = a->first = r;
         } else { // alloc new region and retry
             if(!a->cur->next) {
                 size_t reg_size = a->def_region_size;
-                if(reg_size < aligned + size - 1)
-                    reg_size = aligned + size - 1;
+                if(reg_size < size)
+                    reg_size = size;
 
                 assert(reg_size >= size);
 

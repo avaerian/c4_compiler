@@ -19,7 +19,7 @@ typedef struct {
 } arena_t;
 
 arena_t* arena_new(size_t def_region_size);
-void* arena_alloc(arena_t* a, size_t size, size_t align);
+void* arena_alloc(arena_t* a, size_t size);
 void arena_reset(arena_t* a);
 void arena_free(arena_t* a);
 

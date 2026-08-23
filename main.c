@@ -42,11 +42,10 @@ int main(int argc, char** argv) {
     
     // DEBUG
     token_t tok;
-    while((tok = lexer_new_token(l)).kind != TOKEN_KIND_EOF)
-        printf("Token(row:%d, col:%d): %s\n", tok.row, tok.col, lexer_token_str(tok));
+    while((tok = lexer_next_token(l)).kind != TOKEN_KIND_EOF)
+        printf("Token(row:%d, col:%d, flags: %hu): %s\n", tok.row, tok.col, tok.flags, lexer_token_str(tok, str_alloc));
 
-    printf("Token(row:%d, col:%d): %s\n", tok.row, tok.col, lexer_token_str(tok));
-    printf("Token(row:%d, col:%d): %s\n", tok.row, tok.col, lexer_token_str(tok));
+    printf("Token(row:%d, col:%d): %s\n", tok.row, tok.col, lexer_token_str(tok, str_alloc));
 
     goto cleanup4;
 
